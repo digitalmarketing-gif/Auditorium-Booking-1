@@ -101,7 +101,7 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify(B))}catch(e){}};
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const short=s=>s.split(" – ")[0];
-const APPROVAL_EMAIL="digital.marketing@tasgaonkartech.com,admin.tgichandhai@tasgaonkartech.com";
+const APPROVAL_EMAIL="digital.marketing@tasgaonkartech.com;admin.tgichandhai@tasgaonkartech.com";
 function mailFor(n){
  const dates=n.start===n.end?n.start:n.start+" to "+n.end;
  const body=["Dr. Babasaheb Ambedkar Auditorium - Booking Request (for approval)","",
