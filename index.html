@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f4e8c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Auditorium">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Ambedkar Auditorium Scheduler</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--tx:#1d1d1f;--mu:#6b6b70;--bd:#e2e0da;--ac:#1f4e8c;--ok:#1e7d4f;--wa:#b7791f;--er:#b42318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15161a;--card:#1e2026;--tx:#eceae4;--mu:#9a9aa2;--bd:#32343c;--ac:#6ea0e6;--ok:#4cc38a;--wa:#e5b24d;--er:#f2766b}}
+:root[data-theme="dark"]{--bg:#15161a;--card:#1e2026;--tx:#eceae4;--mu:#9a9aa2;--bd:#32343c;--ac:#6ea0e6;--ok:#4cc38a;--wa:#e5b24d;--er:#f2766b}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0}.sub{color:var(--mu);font-size:13px;margin:2px 0 14px}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav button{flex:1;padding:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hd b{font-size:16px}
+.hd button,.btn{padding:6px 12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;font:inherit;cursor:pointer}
+.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}.btn.ok{color:var(--ok)}.btn.er{color:var(--er)}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dh{font-size:11px;color:var(--mu);text-align:center}
+.d{min-height:62px;border:1px solid var(--bd);border-radius:6px;padding:3px;font-size:11px;cursor:pointer;overflow:hidden}
+.d.o{opacity:.35}.d.t{border-color:var(--ac);border-width:2px}.d.s{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.d span{display:block;font-weight:600;font-size:12px}
+.ch{display:block;border-radius:3px;padding:0 3px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;font-size:10px}
+.ch.Approved{background:var(--ok)}.ch.Pending,.ch.Forwarded{background:var(--wa)}
+.lg{display:flex;gap:12px;font-size:12px;color:var(--mu);margin-top:8px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 3px}
+input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.r{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ck{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px}
+.ck label,.tm label{display:flex;gap:8px;align-items:center;color:var(--tx);margin:0;font-size:14px}
+.ck input,.tm input{width:auto}
+.bg{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid currentColor}
+.Approved{color:var(--ok)}.Pending,.Forwarded{color:var(--wa)}.Denied{color:var(--er)}
+.msg{padding:9px 12px;border-radius:8px;margin:10px 0;font-size:14px;border:1px solid}
+.msg.e{color:var(--er)}.msg.w{color:var(--wa)}.msg.s{color:var(--ok)}
+.it{border-top:1px solid var(--bd);padding:10px 0}.it:first-child{border-top:0}
+.m{color:var(--mu);font-size:13px}.ac{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tm{font-size:13px;color:var(--mu)}.tm ul{margin:6px 0 10px;padding-left:18px}
+.hide{display:none}
+</style></head><body><div class="w">
+<h1>🏛️ Dr. Babasaheb Ambedkar Auditorium</h1>
+<div class="sub">Booking &amp; schedule · Office of the Campus Administrator</div>
+<nav><button data-t="cal" class="on">Schedule</button><button data-t="book">New request</button></nav>
+
+<section id="cal">
+ <div class="card"><div class="hd"><button id="pv">‹</button><b id="mt"></b><button id="nx">›</button></div>
+ <div class="g" id="gr"></div>
+ <div class="lg"><span><i style="background:var(--ok)"></i>Approved</span><span><i style="background:var(--wa)"></i>Pending / forwarded</span></div></div>
+ <div class="card"><b id="dt"></b><div id="dl"></div></div>
+</section>
+
+<section id="book" class="hide"><div class="card">
+ <b>1. Organizer &amp; college</b>
+ <label>Constituent college</label><select id="col"></select>
+ <div class="r"><div><label>Department / Association</label><input id="dep"></div>
+ <div><label>Event coordinator name</label><input id="cn"></div>
+ <div><label>Designation / role</label><input id="ro"></div>
+ <div><label>Contact number &amp; email</label><input id="ct"></div></div>
+ <p></p><b>2. Event &amp; scheduling</b>
+ <label>Title of the event</label><input id="ti">
+ <div class="r"><div><label>Nature of event</label><select id="na"><option>Seminar/Conference</option><option>Cultural</option><option>Exhibition</option><option>Guest Lecture</option><option>Other</option></select></div>
+ <div id="otw" class="hide"><label>Specify other</label><input id="ot"></div>
+ <div><label>Expected attendance</label><input id="at" type="number" min="1"></div></div>
+ <div class="r"><div><label>Start date</label><input id="sd" type="date"></div><div><label>End date (if multi-day)</label><input id="ed" type="date"></div>
+ <div><label>Setup start</label><input id="su" type="time"></div><div><label>Event start</label><input id="fr" type="time"></div><div><label>End</label><input id="to" type="time"></div></div>
+ <p></p><b>3. Technical &amp; logistics</b>
+ <div class="ck" id="rq" style="margin-top:8px"></div>
+ <label>Number of microphones (if sound system)</label><input id="mq" type="number" min="1" style="max-width:120px">
+ <p></p><b>4. Terms &amp; conditions</b>
+ <div class="tm"><ul>
+ <li>Apply via the College Principal, at least 15 working days in advance.</li>
+ <li>Requesting college/organizer is liable for any damage or loss.</li>
+ <li>No food, drinks or chewing gum in the seating hall; catering only in lobby.</li>
+ <li>No nails, tapes or adhesives on walls, woodwork, panels or curtains.</li>
+ <li>Events must end within approved timings; only campus technical staff operate sound, lights and projection.</li>
+ <li>Clear all materials and leave the hall broom-clean; keep aisles and exits unobstructed; do not exceed seating capacity.</li></ul>
+ <label><input type="checkbox" id="ag"> I agree to adhere to the terms above (Event Coordinator's acknowledgment)</label></div>
+ <div id="fm"></div>
+ <div class="ac"><button class="btn p" id="sb">Submit request</button></div>
+</div></section>
+
+
+</div>
+<script>
+const COL=["YTIET – Institute of Engineering & Technology","YTCEM – College of Engineering & Management","YTP – Polytechnic","YTPS – Public School & Jr. College","NYTIMS – Institute of Medical Science","VNTAMRC – Ayurved Mahavidyalaya & Research Centre","NYTCP – College of Physiotherapy","YTIP – Institute of Pharmacy","VTCN – College of Nursing & GNM"];
+const RQ=["Sound System & Microphones","Stage Lighting Control","Multimedia Projector & Screen","Podium & Stage Seating Arrangement","Internet / Wi-Fi Access","Video Recording / Live Streaming Setup","Air Conditioning during event","Additional Green Room Access"];
+const $=id=>document.getElementById(id);
+let B=[];const K="aud_bookings_v1";
+try{B=JSON.parse(localStorage.getItem(K)||"[]")}catch(e){B=[]}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(B))}catch(e){}};
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const short=s=>s.split(" – ")[0];
+const APPROVAL_EMAIL="digital.marketing@tasgaonkartech.com";"ajay.waghmare@tasgaonkartech.com";
+function mailFor(n){
+ const dates=n.start===n.end?n.start:n.start+" to "+n.end;
+ const body=["Dr. Babasaheb Ambedkar Auditorium - Booking Request (for approval)","",
+  "Constituent college: "+n.college,"Department / Association: "+(n.dept||"-"),
+  "Event coordinator: "+n.coord,"Designation / role: "+n.role,"Contact: "+n.contact,"",
+  "Event title: "+n.title,"Nature of event: "+n.nature,"Expected attendance: "+n.att,
+  "Date(s): "+dates,"Setup start: "+(n.setup||"-"),"Event time: "+n.from+" to "+n.to,"",
+  "Requirements: "+(n.reqs.length?n.reqs.join(", "):"none"),"Microphones: "+(n.mics||"-"),"",
+  "Terms & conditions accepted by the Event Coordinator: Yes"+(n.late?"\nNOTE: Short notice (under 15 working days).":""),
+  "Status: Pending approval"].join("\n");
+ return "mailto:"+APPROVAL_EMAIL+"?subject="+encodeURIComponent("Auditorium Booking Request: "+n.title+" ("+dates+")")+"&body="+encodeURIComponent(body)}
+$("col").innerHTML=COL.map(c=>`<option>${esc(c)}</option>`).join("");
+$("rq").innerHTML=RQ.map((r,i)=>`<label><input type="checkbox" class="rc" value="${r}"> ${r}</label>`).join("");
+let cur=new Date(),sel=iso(new Date());cur.setDate(1);
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+ ["cal","book"].forEach(t=>$(t).classList.toggle("hide",t!==b.dataset.t));render()});
+
+const on=(b,d)=>b.start<=d&&d<=b.end;
+const t2m=t=>{const[h,m]=t.split(":");return +h*60+ +m};
+const clash=(n,ignore)=>B.filter(b=>b.id!==ignore&&b.status==="Approved"&&b.start<=n.end&&n.start<=b.end&&t2m(n.setup||n.from)<t2m(b.to)&&t2m(b.setup||b.from)<t2m(n.to));
+function workdays(a,b){let n=0;const d=new Date(a);while(d<b){d.setDate(d.getDate()+1);const w=d.getDay();if(w&&w<6)n++}return n}
+
+function render(){
+ $("mt").textContent=cur.toLocaleString("en-IN",{month:"long",year:"numeric"});
+ let h=["S","M","T","W","T","F","S"].map(x=>`<div class="dh">${x}</div>`).join("");
+ const st=new Date(cur);st.setDate(1-cur.getDay());
+ for(let i=0;i<42;i++){const d=new Date(st);d.setDate(st.getDate()+i);const s=iso(d);
+  const bs=B.filter(b=>b.status!=="Denied"&&on(b,s)).slice(0,2);
+  h+=`<div class="d ${d.getMonth()!==cur.getMonth()?"o":""} ${s===iso(new Date())?"t":""} ${s===sel?"s":""}" data-d="${s}"><span>${d.getDate()}</span>${bs.map(b=>`<i class="ch ${b.status}">${esc(b.from)} ${esc(b.title)}</i>`).join("")}</div>`}
+ $("gr").innerHTML=h;
+ $("gr").querySelectorAll(".d").forEach(e=>e.onclick=()=>{sel=e.dataset.d;render()});
+ $("dt").textContent=new Date(sel+"T00:00").toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ const day=B.filter(b=>b.status!=="Denied"&&on(b,sel)).sort((a,b)=>a.from.localeCompare(b.from));
+ $("dl").innerHTML=day.length?day.map(item).join(""):'<div class="m" style="padding-top:8px">Auditorium is free. Use “New request” to book.</div>';
+ document.querySelectorAll("[data-a]").forEach(e=>e.onclick=()=>act(e.dataset.a,e.dataset.i));
+}
+function item(b,adm){
+ const dates=b.start===b.end?b.start:b.start+" → "+b.end;
+ return `<div class="it"><b>${esc(b.title)}</b> <span class="bg ${b.status}">${b.status}</span>${b.late?' <span class="bg Denied">short notice</span>':""}
+ <div class="m">${dates} · setup ${esc(b.setup||"–")}, ${esc(b.from)}–${esc(b.to)} · ${esc(b.nature)} · ${esc(b.att||"?")} persons</div>
+ <div class="m">${esc(short(b.college))}${b.dept?" · "+esc(b.dept):""} · ${esc(b.coord)} (${esc(b.role)}) · ${esc(b.contact)}</div>
+ ${adm?`<div class="m">Needs: ${b.reqs.length?esc(b.reqs.join(", ")):"none"}${b.mics?" (mics: "+esc(b.mics)+")":""}</div>
+ <div class="ac">${b.status==="Pending"?`<button class="btn" data-a="fwd" data-i="${b.id}">Principal signed ✓</button>`:""}
+ ${b.status==="Pending"||b.status==="Forwarded"?`<button class="btn ok" data-a="ok" data-i="${b.id}">Approve</button><button class="btn er" data-a="no" data-i="${b.id}">Deny</button>`:""}
+ <button class="btn" data-a="del" data-i="${b.id}">Delete</button></div>`:""}</div>`}
+
+function act(a,id){const b=B.find(x=>x.id===id);if(!b)return;
+ if(a==="fwd")b.status="Forwarded";
+ else if(a==="no")b.status="Denied";
+ else if(a==="ok"){const c=clash(b,b.id);if(c.length){alert("Cannot approve: overlaps approved event “"+c[0].title+"”.");return}b.status="Approved"}
+ else if(a==="del"){if(!confirm("Delete this request?"))return;B=B.filter(x=>x.id!==id)}
+ save();render()}
+
+$("na").onchange=()=>$("otw").classList.toggle("hide",$("na").value!=="Other");
+$("pv").onclick=()=>{cur.setMonth(cur.getMonth()-1);render()};
+$("nx").onclick=()=>{cur.setMonth(cur.getMonth()+1);render()};
+
+$("sb").onclick=()=>{
+ const v=id=>$(id).value.trim();
+ const n={id:"b"+Date.now(),college:v("col"),dept:v("dep"),coord:v("cn"),role:v("ro"),contact:v("ct"),title:v("ti"),
+  nature:v("na")==="Other"?(v("ot")||"Other"):v("na"),att:v("at"),start:v("sd"),end:v("ed")||v("sd"),setup:v("su"),from:v("fr"),to:v("to"),
+  reqs:[...document.querySelectorAll(".rc:checked")].map(x=>x.value),mics:v("mq"),status:"Pending",created:Date.now()};
+ const m=(t,c)=>{$("fm").innerHTML=`<div class="msg ${c}">${t}</div>`};
+ if(!n.coord||!n.role||!n.contact||!n.title||!n.start||!n.from||!n.to||!n.att)return m("Please fill coordinator, role, contact, title, date, times and attendance.","e");
+ if(n.end<n.start)return m("End date is before start date.","e");
+ if(t2m(n.to)<=t2m(n.from)||(n.setup&&t2m(n.setup)>t2m(n.from)))return m("Check times: setup ≤ event start < end.","e");
+ if(!$("ag").checked)return m("Please accept the terms and conditions.","e");
+ const c=clash(n);if(c.length)return m(`Slot clashes with approved event “${esc(c[0].title)}” (${c[0].start}, ${c[0].from}–${c[0].to}). Choose another time.`,"e");
+ const t=new Date();t.setHours(0,0,0,0);
+ if(workdays(t,new Date(n.start+"T00:00"))<15){n.late=true}
+ B.push(n);save();
+ const mu=mailFor(n);
+ m("Request submitted as Pending. Your email app should open with the form addressed to "+APPROVAL_EMAIL+" - press Send there. <a href=\""+esc(mu)+"\">Email not opening? Click here.</a>"+(n.late?" Note: it is under 15 working days ahead, so it is flagged as short notice for the Administrator.":" Get the Principal's signature next, then the Administrator will decide."),n.late?"w":"s");
+ ["dep","cn","ro","ct","ti","at","sd","ed","su","fr","to","mq","ot"].forEach(i=>$(i).value="");
+ $("ag").checked=false;document.querySelectorAll(".rc").forEach(x=>x.checked=false);
+ sel=n.start;cur=new Date(n.start+"T00:00");cur.setDate(1);render();
+ window.location.href=mu};
+render();
+</script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
+</body></html>
