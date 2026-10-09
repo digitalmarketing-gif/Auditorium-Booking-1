@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1f4e8c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Auditorium">
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Ambedkar Auditorium Scheduler</title>
 <style>
 :root{--bg:#f6f5f2;--card:#fff;--tx:#1d1d1f;--mu:#6b6b70;--bd:#e2e0da;--ac:#1f4e8c;--ok:#1e7d4f;--wa:#b7791f;--er:#b42318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -56,6 +50,7 @@ input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px
  <div class="card"><div class="hd"><button id="pv">‹</button><b id="mt"></b><button id="nx">›</button></div>
  <div class="g" id="gr"></div>
  <div class="lg"><span><i style="background:var(--ok)"></i>Approved</span><span><i style="background:var(--wa)"></i>Pending / forwarded</span></div></div>
+ <div id="am"></div>
  <div class="card"><b id="dt"></b><div id="dl"></div></div>
 </section>
 
@@ -101,18 +96,32 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify(B))}catch(e){}};
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const short=s=>s.split(" – ")[0];
-const APPROVAL_EMAIL="digital.marketing@tasgaonkartech.com;admin.tgichandhai@tasgaonkartech.com";
-function mailFor(n){
+const APPROVAL_EMAIL="digital.marketing@tasgaonkartech.com";
+const PRINCIPAL_EMAIL={"YTIET":"principal.ytiet@tasgaonkartech.com","YTCEM":"principal.ytcem@tasgaonkartech.com","YTP":"rameshwar.khanpate@tasgaonkartech.com","YTPS":"principal.ytps@tasgaonkartech.com","NYTIMS":"dean.rhrc@tasgaonkartech.com","VNTAMRC":"principal.vntamv@tasgaonkartech.com","NYTCP":"principal.nytcp@tasgaonkartech.com","YTIP":"rupali.tasgaonkar@tasgaonkartech.com","VTCN":"principal.vtcn@tasgaonkartech.com"};
+const COPY_APPROVER=true; // true = digital marketing also gets a copy; false = principal only
+const recips=n=>{const p=PRINCIPAL_EMAIL[short(n.college||"")];const r=[];if(p)r.push(p);if(COPY_APPROVER||!p)r.push(APPROVAL_EMAIL);return r};
+const recipText=n=>recips(n).join(", ");
+function mailParts(n,st){st=st||"Pending";const LB={Pending:"Request (for approval)",Approved:"APPROVED",Denied:"DISAPPROVED"};
  const dates=n.start===n.end?n.start:n.start+" to "+n.end;
- const body=["Dr. Babasaheb Ambedkar Auditorium - Booking Request (for approval)","",
+ const body=["Dr. Babasaheb Ambedkar Auditorium - Booking "+LB[st],"",
   "Constituent college: "+n.college,"Department / Association: "+(n.dept||"-"),
   "Event coordinator: "+n.coord,"Designation / role: "+n.role,"Contact: "+n.contact,"",
   "Event title: "+n.title,"Nature of event: "+n.nature,"Expected attendance: "+n.att,
   "Date(s): "+dates,"Setup start: "+(n.setup||"-"),"Event time: "+n.from+" to "+n.to,"",
   "Requirements: "+(n.reqs.length?n.reqs.join(", "):"none"),"Microphones: "+(n.mics||"-"),"",
   "Terms & conditions accepted by the Event Coordinator: Yes"+(n.late?"\nNOTE: Short notice (under 15 working days).":""),
-  "Status: Pending approval"].join("\n");
- return "mailto:"+APPROVAL_EMAIL+"?subject="+encodeURIComponent("Auditorium Booking Request: "+n.title+" ("+dates+")")+"&body="+encodeURIComponent(body)}
+  "Status: "+(st==="Pending"?"Pending approval":st==="Approved"?"APPROVED":"DISAPPROVED")].join("\n");
+ const subject="Auditorium Booking "+LB[st]+": "+n.title+" ("+dates+")";return {subject,body,url:"mailto:"+recips(n).join(",")+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body)}}
+const mailFor=(n,st)=>mailParts(n,st).url;
+let MCP=null;
+(async()=>{try{if(window.claude&&window.claude.use)MCP=await window.claude.use("mcp")}catch(e){MCP=null}})();
+async function sendMail(n,st){
+ const p=mailParts(n,st);
+ if(!MCP)return {ok:false,code:"unavailable",url:p.url};
+ try{await MCP.callTool("Gmail","send_message",{to:recips(n),subject:p.subject,body:p.body},{cache:false});return {ok:true,url:p.url}}
+ catch(e){return {ok:false,code:(e&&e.code)||"error",url:p.url}}}
+const whyFail=c=>({unavailable:"automatic sending isn't available here",server_not_connected:"Gmail isn't connected to your claude.ai account",needs_reauth:"Gmail needs reconnecting in claude.ai Settings → Connectors",not_in_manifest:"Gmail access was not allowed for this page",selection_required:"more than one Gmail connector is set up and none is chosen",blocked_by_policy:"your organization blocks sending from this page",approval_required:"your organization requires approval to send"}[c]||"Gmail did not confirm the send (code: "+c+"). Check your Sent folder before sending again");
+const fail=(r,what)=>what+" but "+esc(whyFail(r.code))+". <a href=\""+esc(r.url)+"\">Click here to email it from your email app.</a>";
 $("col").innerHTML=COL.map(c=>`<option>${esc(c)}</option>`).join("");
 $("rq").innerHTML=RQ.map((r,i)=>`<label><input type="checkbox" class="rc" value="${r}"> ${r}</label>`).join("");
 let cur=new Date(),sel=iso(new Date());cur.setDate(1);
@@ -137,7 +146,7 @@ function render(){
  $("gr").querySelectorAll(".d").forEach(e=>e.onclick=()=>{sel=e.dataset.d;render()});
  $("dt").textContent=new Date(sel+"T00:00").toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
  const day=B.filter(b=>b.status!=="Denied"&&on(b,sel)).sort((a,b)=>a.from.localeCompare(b.from));
- $("dl").innerHTML=day.length?day.map(item).join(""):'<div class="m" style="padding-top:8px">Auditorium is free. Use “New request” to book.</div>';
+ $("dl").innerHTML=day.length?day.map(b=>item(b)).join(""):'<div class="m" style="padding-top:8px">Auditorium is free. Use “New request” to book.</div>';
  document.querySelectorAll("[data-a]").forEach(e=>e.onclick=()=>act(e.dataset.a,e.dataset.i));
 }
 function item(b,adm){
@@ -155,7 +164,9 @@ function act(a,id){const b=B.find(x=>x.id===id);if(!b)return;
  else if(a==="no")b.status="Denied";
  else if(a==="ok"){const c=clash(b,b.id);if(c.length){alert("Cannot approve: overlaps approved event “"+c[0].title+"”.");return}b.status="Approved"}
  else if(a==="del"){if(!confirm("Delete this request?"))return;B=B.filter(x=>x.id!==id)}
- save();render()}
+ save();render();
+ if(a==="ok"||a==="no"){const am=$("am"),lab=a==="ok"?"Approval":"Disapproval";am.innerHTML='<div class="msg w">Sending '+lab.toLowerCase()+' email...</div>';
+  sendMail(b,b.status).then(r=>{am.innerHTML=r.ok?'<div class="msg s">'+lab+' email sent to '+esc(recipText(b))+' from your Gmail.</div>':'<div class="msg w">'+fail(r,lab+" saved")+'</div>'})}}
 
 $("na").onchange=()=>$("otw").classList.toggle("hide",$("na").value!=="Other");
 $("pv").onclick=()=>{cur.setMonth(cur.getMonth()-1);render()};
@@ -176,11 +187,12 @@ $("sb").onclick=()=>{
  if(workdays(t,new Date(n.start+"T00:00"))<15){n.late=true}
  B.push(n);save();
  const mu=mailFor(n);
- m("Request submitted as Pending. Your email app should open with the form addressed to "+APPROVAL_EMAIL+" - press Send there. <a href=\""+esc(mu)+"\">Email not opening? Click here.</a>"+(n.late?" Note: it is under 15 working days ahead, so it is flagged as short notice for the Administrator.":" Get the Principal's signature next, then the Administrator will decide."),n.late?"w":"s");
+ const dates=n.start===n.end?n.start:n.start+" to "+n.end;
+ const note=n.late?" Note: it is under 15 working days ahead, so it is flagged as short notice.":"";
+ m("Saving and emailing the approval request...","s");
+ sendMail(n,"Pending").then(r=>{if(r.ok)m("Request saved and emailed to "+esc(recipText(n))+" from your Gmail. Get the Principal's signature next."+note,n.late?"w":"s");else m(fail(r,"Request saved")+note,"w")});
  ["dep","cn","ro","ct","ti","at","sd","ed","su","fr","to","mq","ot"].forEach(i=>$(i).value="");
  $("ag").checked=false;document.querySelectorAll(".rc").forEach(x=>x.checked=false);
- sel=n.start;cur=new Date(n.start+"T00:00");cur.setDate(1);render();
- window.location.href=mu};
+ sel=n.start;cur=new Date(n.start+"T00:00");cur.setDate(1);render()};
 render();
-</script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
-</body></html>
+</script></body></html>
